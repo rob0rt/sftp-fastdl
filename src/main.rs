@@ -73,7 +73,7 @@ async fn get_file(app_config: Arc<AppConfig>, file_path: String) -> Response {
         Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
     };
 
-    println("{}", file_path);
+    println!("{}", file_path);
 
     let mut path = PathBuf::new();
     path.push(app_config.sftp.path.as_str());

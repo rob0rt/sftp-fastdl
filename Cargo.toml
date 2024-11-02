@@ -14,3 +14,4 @@ russh-keys = "0.45"
 tokio = { version = "1", features = ["full"] }
 config = "0.14.0"
 serde = { version = "1.0", features = ["derive"] }
+camino = "1"

@@ -1,10 +1,7 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use axum::{
-    http::StatusCode,
-    response::{IntoResponse, Response},
-    routing::get,
-    Router,
+    extract::Path, http::StatusCode, response::{IntoResponse, Response}, routing::get, Router
 };
 use axum_extra::body::AsyncReadBody;
 use config::Config;
@@ -56,7 +53,7 @@ async fn main() {
         "/:file",
         get({
             let config = Arc::clone(&app_config);
-            move |path| get_file(config, path)
+            move |path| get_file(path, config)
         }),
     );
 
@@ -67,7 +64,7 @@ async fn main() {
     axum::serve(listener, app).await.unwrap();
 }
 
-async fn get_file(app_config: Arc<AppConfig>, file_path: String) -> Response {
+async fn get_file(Path(file_path): Path<String>, app_config: Arc<AppConfig>) -> Response {
     let sftp: SftpSession = match get_sftp_client(app_config.as_ref()).await {
         Ok(sftp) => sftp,
         Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),

@@ -38,7 +38,7 @@ impl russh::client::Handler for Client {
 #[tokio::main]
 async fn main() {
     let config = Config::builder()
-        .add_source(config::Environment::default())
+        .add_source(config::Environment::default().separator("_"))
         .build()
         .unwrap();
 

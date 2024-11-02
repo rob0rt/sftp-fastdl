@@ -5,7 +5,7 @@ COPY . .
 
 RUN cargo build --release --bin app
 
-FROM debian:buster-slim AS runtime
+FROM alpine:3.20 AS runtime
 
 WORKDIR /app
 COPY --from=builder /app/target/release/app /usr/local/bin

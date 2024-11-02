@@ -7,7 +7,6 @@ RUN cargo build --release --bin app
 
 FROM alpine:3.20 AS runtime
 
-WORKDIR /app
-COPY --from=builder /app/target/release/app /usr/local/bin
+COPY --from=builder /app/target/release/app /usr/local/bin/app
 
 ENTRYPOINT ["/usr/local/bin/app"]

@@ -8,15 +8,17 @@ use axum::{
     Router,
 };
 use axum_extra::body::AsyncReadBody;
-use camino::Utf8PathBuf;
+use camino::{Utf8Path, Utf8PathBuf};
 use config::Config;
 use russh::client as SshClient;
 use russh_sftp::{
-    client::{error::Error as SftpError, SftpSession},
+    client::{self as SftpClient, error::Error as SftpError, SftpSession},
     protocol::StatusCode as SftpStatusCode,
 };
 use serde::Deserialize;
+use tokio::io::BufReader;
 use std::sync::Arc;
+use async_compression::tokio::bufread::BzEncoder;
 
 #[derive(Deserialize)]
 struct SftpServerConfig {
@@ -73,32 +75,56 @@ async fn main() {
 }
 
 async fn get_file(Path(file_path): Path<String>, app_config: Arc<AppConfig>) -> Response {
-    let sftp: SftpSession = match get_sftp_client(app_config.as_ref()).await {
-        Ok(sftp) => sftp,
-        Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
+    let file_path = Utf8Path::new(file_path.as_str());
+    match file_path.extension() {
+        Some("bz2") => get_bz2(file_path, app_config.as_ref()).await,
+        _ => { 
+            let file = match get_remote_file(file_path, app_config.as_ref()).await {
+                Ok(f) => f,
+                Err(r) => return r,
+            };
+            let body = AsyncReadBody::new(file);
+            (StatusCode::OK, body).into_response()
+        },
+    }
+}
+
+async fn get_bz2(file_path: &Utf8Path, app_config: &AppConfig) -> Response {
+    let file = match get_remote_file(&file_path.with_extension(""), app_config).await {
+        Ok(f) => f,
+        Err(r) => return r,
     };
 
-    let path = match get_remote_path(file_path, &app_config) {
+    let encoder = BzEncoder::new(BufReader::new(file));
+
+    let body = AsyncReadBody::new(encoder);
+    
+    (StatusCode::OK, body).into_response()
+}
+
+async fn get_remote_file(file_path: &Utf8Path, app_config: &AppConfig) -> Result<SftpClient::fs::File, Response> {
+    let path = match get_full_path(file_path, &app_config) {
         Ok(p) => p,
-        Err(e) => return (StatusCode::BAD_REQUEST, e.to_string()).into_response(),
+        Err(e) => return Err((StatusCode::BAD_REQUEST, e.to_string()).into_response()),
+    };
+
+    let sftp: SftpSession = match get_sftp_client(app_config).await {
+        Ok(sftp) => sftp,
+        Err(e) => return Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()),
     };
 
     match sftp.metadata(&path).await {
         Ok(f) if f.is_regular() => {}
         Err(SftpError::Status(status)) if status.status_code == SftpStatusCode::NoSuchFile => {
-            return StatusCode::NOT_FOUND.into_response()
+            return Err(StatusCode::NOT_FOUND.into_response())
         }
-        _ => return StatusCode::BAD_REQUEST.into_response(),
+        _ => return Err(StatusCode::BAD_REQUEST.into_response()),
     };
 
-    let f = match sftp.open(&path).await {
-        Ok(f) => f,
-        Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
-    };
-
-    let body = AsyncReadBody::new(f);
-
-    (StatusCode::OK, body).into_response()
+    match sftp.open(&path).await {
+        Ok(f) => Ok(f),
+        Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()),
+    }
 }
 
 async fn get_sftp_client(app_config: &AppConfig) -> Result<SftpSession> {
@@ -129,7 +155,7 @@ async fn get_sftp_client(app_config: &AppConfig) -> Result<SftpSession> {
     Ok(SftpSession::new(channel.into_stream()).await?)
 }
 
-fn get_remote_path(file_path: String, app_config: &AppConfig) -> Result<String> {
+fn get_full_path(file_path: &Utf8Path, app_config: &AppConfig) -> Result<String> {
     let base_path = app_config.sftp.path.as_str();
 
     let mut path = Utf8PathBuf::new();

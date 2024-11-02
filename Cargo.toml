@@ -15,3 +15,4 @@ tokio = { version = "1", features = ["full"] }
 config = "0.14.0"
 serde = { version = "1.0", features = ["derive"] }
 camino = "1"
+async-compression = { version = "0.4.17", features = ["tokio", "bzip2"] }

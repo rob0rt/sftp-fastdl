@@ -102,6 +102,7 @@ dependencies = [
  "axum-extra",
  "config",
  "russh",
+ "russh-keys",
  "russh-sftp",
  "serde",
  "tokio",

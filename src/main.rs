@@ -33,6 +33,13 @@ struct Client;
 #[async_trait]
 impl russh::client::Handler for Client {
     type Error = anyhow::Error;
+
+    async fn check_server_key(
+        &mut self,
+        _: &russh_keys::key::PublicKey,
+    ) -> Result<bool, Self::Error> {
+        Ok(true)
+    }
 }
 
 #[tokio::main]
@@ -92,10 +99,7 @@ async fn get_sftp_client(app_config: &AppConfig) -> Result<SftpSession> {
     let sh = Client {};
     let mut session = SshClient::connect(
         Arc::new(config),
-        (
-            app_config.sftp.host.as_str(),
-            app_config.sftp.port,
-        ),
+        (app_config.sftp.host.as_str(), app_config.sftp.port),
         sh,
     )
     .await?;

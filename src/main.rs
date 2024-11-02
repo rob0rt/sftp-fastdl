@@ -50,7 +50,7 @@ async fn main() {
 
     // build our application with a route
     let app = Router::new().route(
-        "/:file",
+        "/*file",
         get({
             let config = Arc::clone(&app_config);
             move |path| get_file(path, config)

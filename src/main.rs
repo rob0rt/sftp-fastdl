@@ -73,6 +73,8 @@ async fn get_file(app_config: Arc<AppConfig>, file_path: String) -> Response {
         Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
     };
 
+    println("{}", file_path);
+
     let mut path = PathBuf::new();
     path.push(app_config.sftp.path.as_str());
     path.push(file_path);
@@ -81,6 +83,8 @@ async fn get_file(app_config: Arc<AppConfig>, file_path: String) -> Response {
         Some(path) => path,
         None => return StatusCode::BAD_REQUEST.into_response(),
     };
+
+    println!("{}", path);
 
     match sftp.metadata(path).await {
         Ok(f) if f.is_regular() => {}

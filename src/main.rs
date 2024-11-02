@@ -25,7 +25,7 @@ struct SftpServerConfig {
 #[derive(Deserialize)]
 struct AppConfig {
     port: u16,
-    sftp_server: SftpServerConfig,
+    sftp: SftpServerConfig,
 }
 
 struct Client;
@@ -67,7 +67,7 @@ async fn get_file(app_config: Arc<AppConfig>, file_path: String) -> Response {
     };
 
     let mut path = PathBuf::new();
-    path.push(app_config.sftp_server.path.as_str());
+    path.push(app_config.sftp.path.as_str());
     path.push(file_path);
 
     let path = match path.to_str() {
@@ -93,8 +93,8 @@ async fn get_sftp_client(app_config: &AppConfig) -> Result<SftpSession> {
     let mut session = SshClient::connect(
         Arc::new(config),
         (
-            app_config.sftp_server.host.as_str(),
-            app_config.sftp_server.port,
+            app_config.sftp.host.as_str(),
+            app_config.sftp.port,
         ),
         sh,
     )
@@ -102,8 +102,8 @@ async fn get_sftp_client(app_config: &AppConfig) -> Result<SftpSession> {
 
     match session
         .authenticate_password(
-            app_config.sftp_server.username.as_str(),
-            app_config.sftp_server.password.as_str(),
+            app_config.sftp.username.as_str(),
+            app_config.sftp.password.as_str(),
         )
         .await
     {

@@ -5,7 +5,7 @@ COPY . .
 
 RUN cargo build --release --bin app
 
-FROM alpine:3.20 AS runtime
+FROM debian:bookworm-slim AS runtime
 
 COPY --from=builder /app/target/release/app /usr/local/bin/app
 

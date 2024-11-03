@@ -20,7 +20,7 @@ pub enum RemoteFileError {
 
 impl From<SftpClientError> for RemoteFileError {
     fn from(value: SftpClientError) -> Self {
-        RemoteFileError::SftpClientError(value)
+        Self::SftpClientError(value)
     }
 }
 
@@ -100,22 +100,22 @@ pub enum SftpClientError {
 
 impl From<SshError> for SftpClientError {
     fn from(value: SshError) -> Self {
-        SftpClientError::SshError(value)
+        Self::SshError(value)
     }
 }
 
 impl From<SftpError> for SftpClientError {
     fn from(value: SftpError) -> Self {
-        SftpClientError::SftpError(value)
+        Self::SftpError(value)
     }
 }
 
 impl Display for SftpClientError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            SftpClientError::SshError(error) => write!(f, "ssh error: {}", error),
-            SftpClientError::SshAuthFailure => write!(f, "failed to authenticate to remote server"),
-            SftpClientError::SftpError(error) => write!(f, "sftp error: {}", error),
+            Self::SshError(error) => write!(f, "ssh error: {}", error),
+            Self::SshAuthFailure => write!(f, "failed to authenticate to remote server"),
+            Self::SftpError(error) => write!(f, "sftp error: {}", error),
         }
     }
 }

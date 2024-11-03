@@ -12,6 +12,7 @@ pub struct SftpServerConfig {
 
 #[derive(Deserialize)]
 pub struct AppConfig {
+    #[serde(default = "default_port")]
     pub port: u16,
     pub sftp: SftpServerConfig,
 }
@@ -23,4 +24,8 @@ pub fn get_app_config() -> AppConfig {
         .unwrap();
 
     config.try_deserialize::<AppConfig>().unwrap()
+}
+
+fn default_port() -> u16 {
+    3000
 }

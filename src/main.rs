@@ -103,10 +103,14 @@ async fn get_bz2(file_path: &Utf8Path, app_config: &AppConfig) -> Response {
 }
 
 async fn get_remote_file(file_path: &Utf8Path, app_config: &AppConfig) -> Result<SftpClient::fs::File, Response> {
+    println!("{}", file_path);
+
     let path = match get_full_path(file_path, &app_config) {
         Ok(p) => p,
         Err(e) => return Err((StatusCode::BAD_REQUEST, e.to_string()).into_response()),
     };
+
+    println!("{}", path);
 
     let sftp: SftpSession = match get_sftp_client(app_config).await {
         Ok(sftp) => sftp,

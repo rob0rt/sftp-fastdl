@@ -165,7 +165,6 @@ fn get_full_path(file_path: &Utf8Path, app_config: &AppConfig) -> Result<String>
     let mut path = Utf8PathBuf::new();
     path.push(base_path);
     path.push(file_path);
-    let path = path.canonicalize_utf8()?;
 
     // Ensure we didn't do any path traversal trickery
     if !path.starts_with(base_path) {
